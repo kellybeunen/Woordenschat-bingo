@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Woordenschat Bingo — Omroeper</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #FAF7F2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 32px;
+  }
+  .page-title {
+    text-align: center;
+    margin-bottom: 18px;
+  }
+  .page-title .sub {
+    font-size: 11px;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: #aaa;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .page-title .main {
+    font-size: 36px;
+    font-weight: 900;
+    color: #111;
+    letter-spacing: -1px;
+  }
+  .stars { color: #F5C842; font-size: 16px; letter-spacing: 4px; display: block; margin-bottom: 2px; }
+
+  .container { width: 100%; max-width: 760px; }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .counter { font-size: 13px; color: #999; font-weight: 500; }
+  .navbtns { display: flex; gap: 8px; }
+  button {
+    background: white;
+    border: 1.5px solid #e0ddd8;
+    border-radius: 10px;
+    padding: 9px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #333;
+    transition: background .12s, transform .08s;
+  }
+  button:hover { background: #f0ede8; }
+  button:active { transform: scale(.97); }
+  .btn-shuffle {
+    font-size: 12px;
+    color: #888;
+    border-color: #ddd;
+    padding: 7px 14px;
+  }
+
+  /* CARD */
+  .card {
+    background: white;
+    border: 1px solid #e8e5e0;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,.06);
+  }
+
+  /* HEADER */
+  .card-header {
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,.4);
+  }
+  .card-header .label {
+    font-size: 10px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .reveal-area { display: flex; align-items: center; gap: 10px; }
+  .word-display {
+    background: rgba(255,255,255,.6);
+    border: 1.5px solid rgba(0,0,0,.12);
+    border-radius: 10px;
+    padding: 6px 18px;
+    font-size: 21px;
+    font-weight: 800;
+    color: #111;
+    display: none;
+    letter-spacing: -.3px;
+  }
+  .word-display.visible { display: block; }
+  .btn-reveal {
+    font-size: 12px;
+    padding: 7px 16px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.55);
+    border: 1.5px solid rgba(0,0,0,.18);
+    font-weight: 700;
+    color: #222;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-reveal:hover { background: rgba(255,255,255,.85); }
+
+  /* BODY */
+  .card-body { display: flex; min-height: 240px; }
+
+  .illus-pane {
+    width: 220px;
+    min-width: 220px;
+    background: #f5f2ed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 22px 16px;
+    border-right: 1px solid #ede9e3;
+  }
+  .illus-pane svg { width: 170px; height: 170px; display: block; }
+
+  .meaning-pane {
+    flex: 1;
+    padding: 30px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+  }
+  .meaning-label {
+    font-size: 10px;
+    color: #bbb;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .meaning-text {
+    font-size: 20px;
+    line-height: 1.65;
+    color: #1a1a1a;
+    font-weight: 400;
+  }
+  .cat-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: #f0ede8;
+    color: #999;
+    border: 1px solid #e5e0da;
+    width: fit-content;
+    font-weight: 500;
+  }
+
+  /* FOOTER */
+  .card-footer {
+    border-top: 1px solid #f0ede8;
+    padding: 12px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .progress-wrap {
+    flex: 1;
+    height: 5px;
+    background: #f0ede8;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-right: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .35s ease;
+  }
+  .hint-text {
+    font-size: 11px;
+    color: #ccc;
+    white-space: nowrap;
+  }
+
+  .bottom-row {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <span class="stars">✦ ✦ ✦</span>
+  <span class="sub">Woordenschat</span>
+  <span class="main">BINGO</span>
+</div>
+
+<div class="container">
+  <div class="topbar">
+    <span class="counter" id="counter">1 / 40</span>
+    <div class="navbtns">
+      <button onclick="prev()">&#8592; Vorige</button>
+      <button onclick="next()">Volgende &#8594;</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header" id="card-header">
+      <span class="label" id="header-label">Omroepkaart</span>
+      <div class="reveal-area">
+        <div class="word-display" id="word-display"></div>
+        <button class="btn-reveal" id="btn-reveal" onclick="toggleReveal()">Toon woord</button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="illus-pane" id="illus-pane"></div>
+      <div class="meaning-pane">
+        <span class="meaning-label">Omschrijving</span>
+        <p class="meaning-text" id="meaning-text"></p>
+        <span class="cat-badge" id="cat-badge"></span>
+      </div>
+    </div>
+
+    <div class="card-footer">
+      <div class="progress-wrap">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <span class="hint-text">&#8592; &#8594; navigeren &nbsp;&#183;&nbsp; spatie = toon woord</span>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <button class="btn-shuffle" onclick="shuffle()">&#8635; Schud volgorde</button>
+    <button class="btn-shuffle" onclick="goTo(0)">&#8676; Begin</button>
+  </div>
+</div>
+
+<script>
+const WORDS = [
+  {
+    word: "het genre",
+    meaning: "De categorie of het soort waartoe een boek, film of kunstwerk behoort — zoals avontuur, horror of romantiek.",
+    category: "Literatuur & kunst",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="14" y="20" width="36" height="50" rx="4" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <rect x="22" y="30" width="20" height="4" rx="2" fill="#D4537E"/>
+      <rect x="22" y="38" width="14" height="2.5" rx="1" fill="#ED93B1"/>
+      <rect x="22" y="44" width="16" height="2.5" rx="1" fill="#ED93B1"/>
+      <rect x="22" y="50" width="12" height="2.5" rx="1" fill="#ED93B1"/>
+      <rect x="60" y="28" width="36" height="50" rx="4" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <rect x="68" y="38" width="20" height="4" rx="2" fill="#3a8aaa"/>
+      <rect x="68" y="46" width="14" height="2.5" rx="1" fill="#7fc5d8"/>
+      <rect x="68" y="52" width="16" height="2.5" rx="1" fill="#7fc5d8"/>
+      <rect x="68" y="58" width="12" height="2.5" rx="1" fill="#7fc5d8"/>
+      <rect x="108" y="22" width="36" height="50" rx="4" fill="#C0DD97" stroke="#639922" stroke-width="1.5"/>
+      <rect x="116" y="32" width="20" height="4" rx="2" fill="#3B6D11"/>
+      <rect x="116" y="40" width="14" height="2.5" rx="1" fill="#97C459"/>
+      <rect x="116" y="46" width="16" height="2.5" rx="1" fill="#97C459"/>
+      <rect x="116" y="52" width="12" height="2.5" rx="1" fill="#97C459"/>
+      <text x="85" y="100" text-anchor="middle" font-size="11" fill="#999" font-family="sans-serif">roman · thriller · poëzie</text>
+    </svg>`
+  },
+  {
+    word: "de robijn",
+    meaning: "Een dieprode, kostbare edelsteen die al eeuwenlang symbool staat voor liefde en rijkdom.",
+    category: "Edelstenen",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="85,22 118,50 107,96 63,96 52,50" fill="#F09595" stroke="#E24B4A" stroke-width="2"/>
+      <polygon points="85,22 118,50 85,44" fill="#F7C1C1"/>
+      <polygon points="63,96 107,96 85,125" fill="#A32D2D"/>
+      <polygon points="52,50 85,44 63,96" fill="#E24B4A"/>
+      <polygon points="118,50 85,44 107,96" fill="#c04040"/>
+      <circle cx="85" cy="60" r="7" fill="white" opacity=".3"/>
+      <text x="85" y="148" text-anchor="middle" font-size="11" fill="#999" font-family="sans-serif">kostbare rode edelsteen</text>
+    </svg>`
+  },
+  {
+    word: "hulpvaardig",
+    meaning: "Iemand die altijd klaarstaat om anderen te helpen, zonder iets terug te verwachten.",
+    category: "Eigenschap",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="58" cy="46" r="19" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <path d="M35 92 Q35 74 58 74 Q81 74 81 92 L81 108 L35 108 Z" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <circle cx="118" cy="54" r="16" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <path d="M98 96 Q98 82 118 82 Q138 82 138 96 L138 110 L98 110 Z" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <path d="M79 84 L98 74" stroke="#5ba8c0" stroke-width="2" stroke-linecap="round"/>
+      <path d="M58 63 L58 72 M51 67 L65 67" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    word: "dagdromen",
+    meaning: "Met je gedachten ergens anders zijn terwijl je wakker bent — je verbeeldt je van alles in je hoofd.",
+    category: "Gevoel & gedrag",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="55" cy="118" r="20" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <circle cx="51" cy="114" r="3.5" fill="#D4537E"/>
+      <path d="M44 122 Q55 116 66 120" stroke="#D4537E" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      <line x1="58" y1="96" x2="64" y2="100" stroke="#ccc" stroke-width="1.5"/>
+      <ellipse cx="98" cy="72" rx="30" ry="20" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <ellipse cx="126" cy="50" rx="24" ry="16" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <ellipse cx="143" cy="33" rx="16" ry="11" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <text x="98" y="77" text-anchor="middle" font-size="16" fill="#3a8aaa">☁</text>
+    </svg>`
+  },
+  {
+    word: "de huisbaas",
+    meaning: "De eigenaar van een woning die die verhuurt aan iemand anders en elke maand huur ontvangt.",
+    category: "Persoon & rol",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="85,26 142,72 28,72" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <rect x="32" y="72" width="106" height="68" fill="white" stroke="#D4537E" stroke-width="1.5"/>
+      <rect x="50" y="88" width="24" height="24" rx="3" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1"/>
+      <rect x="96" y="88" width="24" height="24" rx="3" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1"/>
+      <rect x="70" y="108" width="16" height="32" rx="2" fill="#D4537E"/>
+      <circle cx="82" cy="124" r="2.5" fill="white"/>
+      <text x="85" y="158" text-anchor="middle" font-size="10" fill="#999" font-family="sans-serif">€ huur per maand</text>
+    </svg>`
+  },
+  {
+    word: "straatarm",
+    meaning: "Zo arm dat je nauwelijks genoeg geld hebt om van te leven — je hebt bijna niets.",
+    category: "Financieel",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="85" cy="76" r="38" fill="#f2f0eb" stroke="#ddd" stroke-width="2"/>
+      <text x="85" y="90" text-anchor="middle" font-size="34" fill="#ccc" font-family="sans-serif" font-weight="700">€</text>
+      <line x1="55" y1="46" x2="115" y2="106" stroke="#E24B4A" stroke-width="4" stroke-linecap="round"/>
+      <rect x="60" y="126" width="50" height="10" rx="3" fill="#e0ddd8"/>
+      <rect x="68" y="138" width="34" height="8" rx="2" fill="#d0cec9"/>
+    </svg>`
+  },
+  {
+    word: "het detail",
+    meaning: "Een klein, specifiek onderdeel van iets groters dat je pas opmerkt als je goed kijkt.",
+    category: "Begrip",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="18" y="24" width="100" height="80" rx="7" fill="#f2f0eb" stroke="#ccc" stroke-width="1.5"/>
+      <rect x="30" y="38" width="68" height="5" rx="2" fill="#ddd"/>
+      <rect x="30" y="50" width="55" height="3.5" rx="1.5" fill="#ddd"/>
+      <rect x="30" y="60" width="62" height="3.5" rx="1.5" fill="#ddd"/>
+      <rect x="30" y="70" width="44" height="3.5" rx="1.5" fill="#ddd"/>
+      <circle cx="58" cy="60" r="4" fill="none" stroke="#E24B4A" stroke-width="2"/>
+      <circle cx="58" cy="60" r="15" fill="none" stroke="#E24B4A" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <line x1="69" y1="70" x2="112" y2="112" stroke="#E24B4A" stroke-width="1.5"/>
+      <circle cx="117" cy="117" r="13" fill="#FCEBEB" stroke="#E24B4A" stroke-width="1.5"/>
+      <circle cx="58" cy="60" r="3" fill="#E24B4A"/>
+    </svg>`
+  },
+  {
+    word: "uit je bol gaan",
+    meaning: "Zo enthousiast feesten of reageren dat je helemaal losgaat en alle remmen viert.",
+    category: "Uitdrukking",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="85" cy="98" r="34" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <circle cx="74" cy="91" r="4" fill="#D4537E"/>
+      <circle cx="96" cy="91" r="4" fill="#D4537E"/>
+      <path d="M70 107 Q85 120 100 107" stroke="#D4537E" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M72 62 Q70 43 61 33" stroke="#F5C842" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M85 58 Q85 39 85 26" stroke="#F5C842" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <path d="M98 62 Q100 43 109 33" stroke="#F5C842" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <circle cx="61" cy="30" r="6" fill="#F5C842"/>
+      <circle cx="85" cy="23" r="6" fill="#F5C842"/>
+      <circle cx="109" cy="30" r="6" fill="#F5C842"/>
+    </svg>`
+  },
+  {
+    word: "de polonaise",
+    meaning: "Een vrolijke feestdans waarbij iedereen achter elkaar aanloopt en samen door de ruimte slingert.",
+    category: "Dans & feest",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="26" cy="52" r="12" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <path d="M26 64 L26 96" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M18 74 Q11 69 9 62" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+      <path d="M34 74 Q41 69 44 62" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="85" cy="58" r="12" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <path d="M85 70 L85 102" stroke="#5ba8c0" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M77 80 Q70 75 68 68" stroke="#5ba8c0" stroke-width="2" stroke-linecap="round"/>
+      <path d="M93 80 Q100 75 102 68" stroke="#5ba8c0" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="144" cy="52" r="12" fill="#C0DD97" stroke="#639922" stroke-width="1.5"/>
+      <path d="M144 64 L144 96" stroke="#639922" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M136 74 Q129 69 127 62" stroke="#639922" stroke-width="2" stroke-linecap="round"/>
+      <path d="M152 74 Q159 69 161 62" stroke="#639922" stroke-width="2" stroke-linecap="round"/>
+      <path d="M38 62 Q55 54 68 62" stroke="#ccc" stroke-width="1.5" stroke-dasharray="3,2" fill="none"/>
+      <path d="M102 62 Q120 54 130 62" stroke="#ccc" stroke-width="1.5" stroke-dasharray="3,2" fill="none"/>
+      <path d="M9 138 Q85 114 161 138" stroke="#F5C842" stroke-width="2.5" stroke-linecap="round" fill="none" stroke-dasharray="6,4"/>
+    </svg>`
+  },
+  {
+    word: "de biografie",
+    meaning: "Een boek waarin het leven van een echte persoon van begin tot eind wordt verteld door iemand anders.",
+    category: "Literatuur",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="34" y="20" width="90" height="116" rx="6" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <rect x="34" y="20" width="15" height="116" rx="4" fill="#5ba8c0"/>
+      <circle cx="100" cy="62" r="18" fill="#E6F1FB" stroke="#5ba8c0" stroke-width="1.5"/>
+      <path d="M72 94 Q72 79 100 79 Q128 79 128 94" fill="#E6F1FB" stroke="#5ba8c0" stroke-width="1.5"/>
+      <rect x="65" y="102" width="58" height="4" rx="2" fill="#85B7EB"/>
+      <rect x="72" y="110" width="44" height="3" rx="1.5" fill="#B5D4F4"/>
+      <rect x="76" y="118" width="34" height="3" rx="1.5" fill="#B5D4F4"/>
+      <text x="100" y="146" text-anchor="middle" font-size="10" fill="#3a8aaa" font-family="sans-serif">zijn leven · haar verhaal</text>
+    </svg>`
+  },
+  {
+    word: "vermogend",
+    meaning: "Iemand die veel geld of bezittingen heeft — rijker dan de meeste mensen om hem of haar heen.",
+    category: "Financieel",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="26" y="66" width="108" height="64" rx="7" fill="#C0DD97" stroke="#639922" stroke-width="1.5"/>
+      <rect x="36" y="54" width="88" height="18" rx="6" fill="#97C459" stroke="#639922" stroke-width="1"/>
+      <rect x="48" y="44" width="64" height="16" rx="5" fill="#C0DD97" stroke="#639922" stroke-width="1"/>
+      <circle cx="85" cy="98" r="18" fill="#EAF3DE" stroke="#639922" stroke-width="1.5"/>
+      <text x="85" y="105" text-anchor="middle" font-size="20" font-weight="700" fill="#3B6D11" font-family="sans-serif">€</text>
+      <text x="85" y="150" text-anchor="middle" font-size="10" fill="#999" font-family="sans-serif">veel geld &amp; bezit</text>
+    </svg>`
+  },
+  {
+    word: "de smaragd",
+    meaning: "Een heldergroene, zeldzame edelsteen die in de Oudheid al gold als een van de kostbaarste stenen.",
+    category: "Edelstenen",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="85,22 118,46 118,100 85,122 52,100 52,46" fill="#5DCAA5" stroke="#0F6E56" stroke-width="2"/>
+      <polygon points="85,22 118,46 85,58" fill="#9FE1CB"/>
+      <polygon points="52,46 85,58 85,122 52,100" fill="#0F6E56"/>
+      <polygon points="118,46 85,58 85,122 118,100" fill="#1D9E75"/>
+      <polygon points="85,22 52,46 85,58" fill="#E1F5EE"/>
+      <circle cx="85" cy="72" r="7" fill="white" opacity=".3"/>
+      <text x="85" y="148" text-anchor="middle" font-size="11" fill="#999" font-family="sans-serif">kostbare groene edelsteen</text>
+    </svg>`
+  },
+  {
+    word: "de walm",
+    meaning: "Een dikke, verstikkende wolk van rook, stoom of damp die je nauwelijks door kunt kijken.",
+    category: "Natuur & omgeving",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="60" y="110" width="50" height="26" rx="5" fill="#888"/>
+      <ellipse cx="85" cy="92" rx="30" ry="19" fill="#bbb" opacity=".85"/>
+      <ellipse cx="66" cy="76" rx="24" ry="16" fill="#bbb" opacity=".75"/>
+      <ellipse cx="96" cy="62" rx="28" ry="18" fill="#bbb" opacity=".65"/>
+      <ellipse cx="70" cy="48" rx="21" ry="14" fill="#ccc" opacity=".7"/>
+      <ellipse cx="100" cy="36" rx="17" ry="12" fill="#ccc" opacity=".55"/>
+      <text x="85" y="154" text-anchor="middle" font-size="11" fill="#999" font-family="sans-serif">dikke rook of damp</text>
+    </svg>`
+  },
+  {
+    word: "spreiden",
+    meaning: "Iets uitstrekken of over een groter oppervlak verdelen — zoals boter smeren of armen uitstrekken.",
+    category: "Werkwoord",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="85" cy="85" r="13" fill="#F5C6D0" stroke="#D4537E" stroke-width="2"/>
+      <line x1="85" y1="72" x2="85" y2="28" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="85" y1="98" x2="85" y2="142" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="72" y1="85" x2="28" y2="85" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="98" y1="85" x2="142" y2="85" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="76" y1="76" x2="48" y2="48" stroke="#B8E0EC" stroke-width="2" stroke-linecap="round"/>
+      <line x1="94" y1="76" x2="122" y2="48" stroke="#B8E0EC" stroke-width="2" stroke-linecap="round"/>
+      <line x1="76" y1="94" x2="48" y2="122" stroke="#B8E0EC" stroke-width="2" stroke-linecap="round"/>
+      <line x1="94" y1="94" x2="122" y2="122" stroke="#B8E0EC" stroke-width="2" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    word: "het lintje",
+    meaning: "Een kleine koninklijke onderscheiding voor mensen die zich bijzonder hebben ingezet voor de samenleving.",
+    category: "Onderscheiding",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="85,22 98,60 138,60 108,82 120,120 85,98 50,120 62,82 32,60 72,60" fill="#F5C842" stroke="#BA7517" stroke-width="1.5"/>
+      <circle cx="85" cy="72" r="18" fill="#FAF7F2" stroke="#BA7517" stroke-width="1.5"/>
+      <text x="85" y="79" text-anchor="middle" font-size="15" font-weight="700" fill="#BA7517" font-family="sans-serif">K</text>
+      <rect x="76" y="120" width="7" height="28" rx="2" fill="#E24B4A"/>
+      <rect x="87" y="120" width="7" height="28" rx="2" fill="#185FA5"/>
+    </svg>`
+  },
+  {
+    word: "romantisch",
+    meaning: "Iets dat gevoelens van liefde en tederheid oproept, of iemand die veel waarde hecht aan liefde.",
+    category: "Eigenschap",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <path d="M85 115 C85 115 36 86 36 57 C36 40 53 31 68 40 C75 45 80 53 85 58 C90 53 95 45 102 40 C117 31 134 40 134 57 C134 86 85 115 85 115Z" fill="#F09595" stroke="#E24B4A" stroke-width="1.5"/>
+      <path d="M85 109 C85 109 52 88 52 62 C52 50 62 45 71 51 C76 55 80 60 85 64" fill="#F7C1C1"/>
+      <circle cx="120" cy="42" r="6" fill="#F5C842"/>
+      <line x1="120" y1="34" x2="120" y2="28" stroke="#F5C842" stroke-width="2"/>
+      <line x1="126" y1="36" x2="130" y2="31" stroke="#F5C842" stroke-width="2"/>
+      <line x1="128" y1="42" x2="134" y2="42" stroke="#F5C842" stroke-width="2"/>
+    </svg>`
+  },
+  {
+    word: "de pottenkijker",
+    meaning: "Iemand die nieuwsgierig meeluistert of meekijkt in zaken die hem of haar eigenlijk niet aangaan.",
+    category: "Persoon & rol",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="14" y="26" width="92" height="82" rx="9" fill="#f2f0eb" stroke="#ccc" stroke-width="1.5"/>
+      <rect x="26" y="40" width="62" height="5" rx="2" fill="#ddd"/>
+      <rect x="26" y="52" width="50" height="3.5" rx="1.5" fill="#ddd"/>
+      <rect x="26" y="62" width="56" height="3.5" rx="1.5" fill="#ddd"/>
+      <rect x="26" y="72" width="40" height="3.5" rx="1.5" fill="#ddd"/>
+      <circle cx="132" cy="58" r="28" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <circle cx="132" cy="58" r="13" fill="white"/>
+      <circle cx="134" cy="56" r="7" fill="#3a8aaa"/>
+      <circle cx="136" cy="54" r="3" fill="white"/>
+      <line x1="111" y1="77" x2="102" y2="90" stroke="#5ba8c0" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    word: "onafscheidelijk",
+    meaning: "Twee mensen of dingen die altijd samen zijn en bijna nooit zonder elkaar te zien zijn.",
+    category: "Eigenschap",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="54" cy="54" r="20" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <path d="M30 96 Q30 78 54 78 Q78 78 78 96 L78 114 L30 114 Z" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <circle cx="116" cy="54" r="20" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <path d="M92 96 Q92 78 116 78 Q140 78 140 96 L140 114 L92 114 Z" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <path d="M76 62 Q85 54 94 62" stroke="#F5C842" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M76 70 Q85 63 94 70" stroke="#F5C842" stroke-width="2" fill="none" stroke-linecap="round" opacity=".6"/>
+    </svg>`
+  },
+  {
+    word: "de roman",
+    meaning: "Een lang, verzonnen verhaal in boekvorm met personages en een plot dat je meeneemt in een andere wereld.",
+    category: "Literatuur",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="40" y="18" width="84" height="118" rx="6" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+      <rect x="40" y="18" width="15" height="118" rx="4" fill="#534AB7"/>
+      <rect x="64" y="36" width="48" height="6" rx="2" fill="#7F77DD"/>
+      <rect x="64" y="50" width="38" height="3.5" rx="1.5" fill="#AFA9EC"/>
+      <rect x="64" y="59" width="42" height="3.5" rx="1.5" fill="#AFA9EC"/>
+      <rect x="64" y="68" width="34" height="3.5" rx="1.5" fill="#AFA9EC"/>
+      <rect x="64" y="82" width="42" height="3.5" rx="1.5" fill="#AFA9EC"/>
+      <rect x="64" y="91" width="30" height="3.5" rx="1.5" fill="#AFA9EC"/>
+      <rect x="64" y="100" width="38" height="3.5" rx="1.5" fill="#AFA9EC"/>
+      <rect x="64" y="116" width="36" height="3.5" rx="1.5" fill="#CECBF6"/>
+    </svg>`
+  },
+  {
+    word: "de oorkonde",
+    meaning: "Een officieel, plechtig document waarop staat dat iemand iets bijzonders heeft gepresteerd of verdiend.",
+    category: "Onderscheiding",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="24" width="116" height="90" rx="6" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.5"/>
+      <rect x="32" y="36" width="92" height="6" rx="2" fill="#EF9F27"/>
+      <rect x="44" y="50" width="74" height="3.5" rx="1.5" fill="#FAC775"/>
+      <rect x="48" y="60" width="66" height="3.5" rx="1.5" fill="#FAC775"/>
+      <rect x="50" y="70" width="62" height="3.5" rx="1.5" fill="#FAC775"/>
+      <circle cx="85" cy="116" r="22" fill="#F5C842" stroke="#BA7517" stroke-width="2"/>
+      <circle cx="85" cy="116" r="15" fill="#FAF7F2" stroke="#BA7517" stroke-width="1"/>
+      <text x="85" y="122" text-anchor="middle" font-size="18" font-weight="700" fill="#BA7517" font-family="sans-serif">✓</text>
+      <rect x="58" y="138" width="54" height="5" rx="2" fill="#e0ddd8"/>
+    </svg>`
+  },
+  {
+    word: "kunstig",
+    meaning: "Op een vakkundige en sierlijke manier gemaakt — met veel aandacht voor techniek en schoonheid.",
+    category: "Eigenschap",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <path d="M22 130 Q46 58 85 42 Q124 58 148 130" fill="#EEEDFE" stroke="#534AB7" stroke-width="1.5"/>
+      <circle cx="85" cy="42" r="10" fill="#7F77DD"/>
+      <path d="M54 96 Q66 72 85 66 Q104 72 116 96" fill="none" stroke="#AFA9EC" stroke-width="1.5"/>
+      <circle cx="40" cy="116" r="7" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <circle cx="85" cy="103" r="7" fill="#F5C842" stroke="#BA7517" stroke-width="1.5"/>
+      <circle cx="130" cy="116" r="7" fill="#9FE1CB" stroke="#0F6E56" stroke-width="1.5"/>
+      <path d="M47 118 Q66 106 85 110 Q104 106 123 118" stroke="#534AB7" stroke-width="1" fill="none" stroke-dasharray="3,2"/>
+    </svg>`
+  },
+  {
+    word: "de smokkelaar",
+    meaning: "Iemand die verboden goederen in het geheim over de grens brengt zonder dit aan te geven bij de douane.",
+    category: "Persoon & rol",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="85" cy="46" r="19" fill="#888" stroke="#666" stroke-width="1.5"/>
+      <path d="M60 84 Q60 66 85 66 Q110 66 110 84 L110 106 L60 106 Z" fill="#888" stroke="#666" stroke-width="1.5"/>
+      <rect x="34" y="92" width="28" height="22" rx="3" fill="#444"/>
+      <rect x="108" y="92" width="28" height="22" rx="3" fill="#444"/>
+      <rect x="38" y="97" width="20" height="3.5" rx="1.5" fill="#ccc"/>
+      <rect x="38" y="103" width="14" height="3" rx="1.5" fill="#aaa"/>
+      <rect x="112" y="97" width="20" height="3.5" rx="1.5" fill="#ccc"/>
+      <rect x="112" y="103" width="14" height="3" rx="1.5" fill="#aaa"/>
+      <line x1="82" y1="66" x2="44" y2="92" stroke="#666" stroke-width="1.5"/>
+      <line x1="88" y1="66" x2="120" y2="92" stroke="#666" stroke-width="1.5"/>
+    </svg>`
+  },
+  {
+    word: "alledaags",
+    meaning: "Heel gewoon en doorsnee — iets wat je elke dag ziet of meemaakt zonder dat het bijzonder is.",
+    category: "Eigenschap",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="24" y="26" width="122" height="112" rx="9" fill="#f2f0eb" stroke="#ddd" stroke-width="1.5"/>
+      <rect x="38" y="16" width="18" height="20" rx="3" fill="#ccc"/>
+      <rect x="114" y="16" width="18" height="20" rx="3" fill="#ccc"/>
+      <line x1="24" y1="54" x2="146" y2="54" stroke="#e0ddd8" stroke-width="1"/>
+      <text x="47" y="48" font-size="9" fill="#bbb" font-family="sans-serif">Ma</text>
+      <text x="64" y="48" font-size="9" fill="#bbb" font-family="sans-serif">Di</text>
+      <text x="80" y="48" font-size="9" fill="#bbb" font-family="sans-serif">Wo</text>
+      <text x="97" y="48" font-size="9" fill="#bbb" font-family="sans-serif">Do</text>
+      <text x="113" y="48" font-size="9" fill="#bbb" font-family="sans-serif">Vr</text>
+      <circle cx="85" cy="96" r="24" fill="#e0ddd8"/>
+      <text x="85" y="104" text-anchor="middle" font-size="26" font-weight="600" fill="#bbb" font-family="sans-serif">…</text>
+      <text x="85" y="155" text-anchor="middle" font-size="10" fill="#999" font-family="sans-serif">gewoon · normaal · doorsnee</text>
+    </svg>`
+  },
+  {
+    word: "strompelen",
+    meaning: "Moeizaam en wankel lopen alsof je elk moment kunt vallen, door pijn, vermoeidheid of een blessure.",
+    category: "Werkwoord",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="78" cy="32" r="14" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <line x1="78" y1="46" x2="72" y2="78" stroke="#D4537E" stroke-width="3" stroke-linecap="round"/>
+      <line x1="72" y1="78" x2="58" y2="108" stroke="#D4537E" stroke-width="3" stroke-linecap="round"/>
+      <line x1="72" y1="78" x2="90" y2="104" stroke="#D4537E" stroke-width="3" stroke-linecap="round"/>
+      <line x1="78" y1="60" x2="60" y2="72" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+      <line x1="78" y1="60" x2="100" y2="54" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+      <line x1="100" y1="54" x2="116" y2="70" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+      <path d="M32 128 Q85 118 132 130" stroke="#e0ddd8" stroke-width="2" fill="none"/>
+    </svg>`
+  },
+  {
+    word: "op ooghoogte",
+    meaning: "Op gelijke hoogte met de ogen — of: met respect en als gelijke omgaan met iemand.",
+    category: "Uitdrukking",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="40" cy="38" r="15" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <line x1="40" y1="53" x2="40" y2="100" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="40" y1="100" x2="28" y2="134" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="40" y1="100" x2="52" y2="134" stroke="#D4537E" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="40" y1="72" x2="25" y2="84" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+      <line x1="40" y1="72" x2="55" y2="84" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="130" cy="38" r="15" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <line x1="130" y1="53" x2="130" y2="100" stroke="#5ba8c0" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="130" y1="100" x2="118" y2="134" stroke="#5ba8c0" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="130" y1="100" x2="142" y2="134" stroke="#5ba8c0" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="130" y1="72" x2="115" y2="84" stroke="#5ba8c0" stroke-width="2" stroke-linecap="round"/>
+      <line x1="130" y1="72" x2="145" y2="84" stroke="#5ba8c0" stroke-width="2" stroke-linecap="round"/>
+      <line x1="10" y1="38" x2="160" y2="38" stroke="#F5C842" stroke-width="2" stroke-dasharray="6,4"/>
+    </svg>`
+  },
+  {
+    word: "de spencer",
+    meaning: "Een kort, nauwsluitend jasje dat alleen tot aan de taille reikt, vroeger populair als modekledij.",
+    category: "Kleding",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <path d="M54 52 L36 70 L36 116 L134 116 L134 70 L116 52 Z" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <path d="M54 52 L48 32 L85 42 L122 32 L116 52" fill="#85B7EB" stroke="#5ba8c0" stroke-width="1"/>
+      <line x1="85" y1="52" x2="85" y2="116" stroke="#5ba8c0" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <circle cx="85" cy="67" r="3.5" fill="#5ba8c0"/>
+      <circle cx="85" cy="84" r="3.5" fill="#5ba8c0"/>
+      <circle cx="85" cy="101" r="3.5" fill="#5ba8c0"/>
+      <text x="85" y="142" text-anchor="middle" font-size="10" fill="#999" font-family="sans-serif">kort jasje tot aan de taille</text>
+    </svg>`
+  },
+  {
+    word: "vervalsen",
+    meaning: "Iets namaken zodat het er echt uitziet — zoals een handtekening, paspoort of kunstwerk.",
+    category: "Werkwoord",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="16" y="30" width="62" height="84" rx="6" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.5"/>
+      <rect x="26" y="44" width="38" height="5" rx="2" fill="#EF9F27"/>
+      <rect x="26" y="56" width="30" height="3.5" rx="1.5" fill="#FAC775"/>
+      <rect x="26" y="66" width="34" height="3.5" rx="1.5" fill="#FAC775"/>
+      <rect x="26" y="76" width="24" height="3.5" rx="1.5" fill="#FAC775"/>
+      <rect x="92" y="30" width="62" height="84" rx="6" fill="#f2f0eb" stroke="#ddd" stroke-width="1.5"/>
+      <rect x="102" y="44" width="38" height="5" rx="2" fill="#e0ddd8"/>
+      <rect x="102" y="56" width="30" height="3.5" rx="1.5" fill="#e0ddd8"/>
+      <rect x="102" y="66" width="34" height="3.5" rx="1.5" fill="#e0ddd8"/>
+      <rect x="102" y="76" width="24" height="3.5" rx="1.5" fill="#e0ddd8"/>
+      <line x1="79" y1="72" x2="92" y2="72" stroke="#E24B4A" stroke-width="3" stroke-linecap="round"/>
+      <line x1="85" y1="66" x2="85" y2="78" stroke="#E24B4A" stroke-width="3" stroke-linecap="round"/>
+      <text x="123" y="136" text-anchor="middle" font-size="36" fill="#E24B4A" font-family="sans-serif" font-weight="700">✕</text>
+    </svg>`
+  },
+  {
+    word: "de onderscheiding",
+    meaning: "Een officiële beloning of eretitel die iemand krijgt voor uitzonderlijke prestaties of inzet.",
+    category: "Onderscheiding",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="85,18 99,58 142,58 108,82 122,122 85,98 48,122 62,82 28,58 71,58" fill="#F5C842" stroke="#BA7517" stroke-width="1.5"/>
+      <circle cx="85" cy="72" r="22" fill="#FAF7F2" stroke="#BA7517" stroke-width="1.5"/>
+      <text x="85" y="80" text-anchor="middle" font-size="24" font-weight="700" fill="#BA7517" font-family="sans-serif">★</text>
+      <rect x="70" y="122" width="11" height="28" rx="2" fill="#E24B4A"/>
+      <rect x="89" y="122" width="11" height="28" rx="2" fill="#185FA5"/>
+    </svg>`
+  },
+  {
+    word: "het medaillon",
+    meaning: "Een sierlijk hangertje aan een ketting, vaak rond of ovaal, soms met een foto of haar erin.",
+    category: "Sieraad",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <path d="M85 18 Q108 18 120 30 Q130 44 124 56 L46 56 Q40 44 50 30 Q62 18 85 18Z" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <circle cx="85" cy="106" r="46" fill="#FAEEDA" stroke="#BA7517" stroke-width="2"/>
+      <circle cx="85" cy="106" r="36" fill="none" stroke="#EF9F27" stroke-width="1" stroke-dasharray="4,3"/>
+      <circle cx="85" cy="106" r="22" fill="#FAF7F2" stroke="#BA7517" stroke-width="1.5"/>
+      <circle cx="76" cy="102" r="6" fill="#F5C6D0"/>
+      <circle cx="94" cy="102" r="6" fill="#B8E0EC"/>
+      <path d="M70 113 Q85 121 100 113" stroke="#BA7517" stroke-width="1.5" fill="none"/>
+    </svg>`
+  },
+  {
+    word: "doodgewoon",
+    meaning: "Volledig normaal en niets bijzonders — zo gewoon dat niemand er een tweede blik aan waardeert.",
+    category: "Eigenschap",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="85" cy="70" r="36" fill="#f2f0eb" stroke="#ddd" stroke-width="1.5"/>
+      <circle cx="72" cy="63" r="5" fill="#ccc"/>
+      <circle cx="98" cy="63" r="5" fill="#ccc"/>
+      <line x1="69" y1="82" x2="101" y2="82" stroke="#ccc" stroke-width="3" stroke-linecap="round"/>
+      <rect x="46" y="118" width="78" height="7" rx="3" fill="#e0ddd8"/>
+      <rect x="56" y="130" width="58" height="6" rx="2" fill="#e0ddd8"/>
+      <rect x="66" y="141" width="38" height="5" rx="2" fill="#e0ddd8"/>
+    </svg>`
+  },
+  {
+    word: "de bezienswaardigheid",
+    meaning: "Een bekende plek of gebouw dat de moeite waard is om te bezoeken vanwege zijn schoonheid of geschiedenis.",
+    category: "Toerisme",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="54" y="72" width="62" height="66" rx="3" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <polygon points="85,30 122,72 48,72" fill="#85B7EB" stroke="#5ba8c0" stroke-width="1.5"/>
+      <rect x="68" y="92" width="18" height="22" rx="2" fill="#E6F1FB" stroke="#5ba8c0" stroke-width="1"/>
+      <rect x="92" y="92" width="14" height="14" rx="1" fill="#E6F1FB" stroke="#5ba8c0" stroke-width="1"/>
+      <circle cx="85" cy="24" r="7" fill="#F5C842"/>
+      <path d="M104 54 Q118 34 138 28" stroke="#F5C842" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <circle cx="142" cy="26" r="6" fill="#F5C842"/>
+      <text x="85" y="156" text-anchor="middle" font-size="10" fill="#999" font-family="sans-serif">toeristische attractie</text>
+    </svg>`
+  },
+  {
+    word: "de edelsteen",
+    meaning: "Een zeldzame en waardevolle steen uit de grond die geslepen wordt verwerkt in sieraden.",
+    category: "Edelstenen",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="85,22 120,50 120,100 85,122 50,100 50,50" fill="#AFA9EC" stroke="#534AB7" stroke-width="2"/>
+      <polygon points="85,22 120,50 85,60" fill="#CECBF6"/>
+      <polygon points="50,50 85,60 85,122 50,100" fill="#534AB7"/>
+      <polygon points="120,50 85,60 85,122 120,100" fill="#7F77DD"/>
+      <polygon points="85,22 50,50 85,60" fill="#EEEDFE"/>
+      <circle cx="85" cy="74" r="8" fill="white" opacity=".3"/>
+      <text x="85" y="150" text-anchor="middle" font-size="11" fill="#999" font-family="sans-serif">zeldzame kostbare steen</text>
+    </svg>`
+  },
+  {
+    word: "enigszins",
+    meaning: "Een beetje, in zekere mate — niet helemaal, maar ook zeker niet niks.",
+    category: "Bijwoord",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="20" y="92" width="130" height="20" rx="6" fill="#f2f0eb" stroke="#ddd" stroke-width="1.5"/>
+      <rect x="20" y="92" width="46" height="20" rx="6" fill="#B8E0EC" stroke="#5ba8c0" stroke-width="1.5"/>
+      <circle cx="66" cy="102" r="13" fill="#5ba8c0"/>
+      <text x="20" y="76" font-size="12" fill="#ccc" font-family="sans-serif">0%</text>
+      <text x="144" y="76" font-size="12" fill="#ccc" font-family="sans-serif" text-anchor="end">100%</text>
+      <text x="66" y="72" text-anchor="middle" font-size="15" font-weight="700" fill="#3a8aaa" font-family="sans-serif">~35%</text>
+      <text x="85" y="140" text-anchor="middle" font-size="11" fill="#999" font-family="sans-serif">een beetje · in zekere mate</text>
+    </svg>`
+  },
+  {
+    word: "de klederdracht",
+    meaning: "De traditionele kledij die hoort bij een bepaalde regio of cultuur en al generaties lang gedragen wordt.",
+    category: "Kleding & cultuur",
+    color: "blue",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="85" cy="36" r="17" fill="#F5C6D0" stroke="#D4537E" stroke-width="1.5"/>
+      <path d="M56 62 L52 124 L118 124 L114 62 Q102 52 85 52 Q68 52 56 62Z" fill="#E24B4A" stroke="#A32D2D" stroke-width="1.5"/>
+      <path d="M56 62 L44 80 L36 108" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round"/>
+      <path d="M114 62 L126 80 L134 108" stroke="#A32D2D" stroke-width="2.5" stroke-linecap="round"/>
+      <rect x="52" y="124" width="66" height="24" rx="4" fill="#185FA5" stroke="#0C447C" stroke-width="1"/>
+      <path d="M56 80 Q85 68 114 80" stroke="#F5C842" stroke-width="2.5" fill="none"/>
+      <path d="M56 92 Q85 80 114 92" stroke="#F5C842" stroke-width="2" fill="none"/>
+      <circle cx="85" cy="58" r="5" fill="#F5C842"/>
+    </svg>`
+  },
+  {
+    word: "de triller",
+    meaning: "Een spannend boek of film waarbij je voortdurend op het puntje van je stoel zit van de spanning.",
+    category: "Literatuur & film",
+    color: "pink",
+    svg: `<svg viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+      <rect x="36" y="18" width="82" height="118" rx="6" fill="#2C2C2A" stroke="#444" stroke-width="1.5"/>
+      <rect x="36" y="18" width="15" height="118" rx="4" fill="#444"/>
+      <rect x="60" y="36" width="46" height="6" rx="2" fill="#E24B4A"/>
+      <rect x="60" y="50" width="34" height="3" rx="1" fill="#555"/>
+      <rect x="60" y="59" width="38" height="3" rx="1" fill="#555"/>
+      <circle cx="100" cy="96" r="20" fill="#FCEBEB" stroke="#E24B4A" stroke-width="1.5"/>
+      <text x="100" y="104" text-anchor="middle" font-size="26" font-weight="700" fill="#E24B4A" font-family="sans-serif">!</text>
+      <path d="M56 82 Q62 70 68 82 Q74 94 80 82" stroke="#E24B4A" stroke-width="2" fill="none"/>
+    </svg>`
+  },
+];
+
+let current = 0;
+let revealed = false;
+let order = WORDS.map((_, i) => i);
+
+function shuffle() {
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  current = 0;
+  showCard();
+}
+
+function goTo(idx) {
+  current = idx;
+  showCard();
+}
+
+function showCard() {
+  revealed = false;
+  const w = WORDS[order[current]];
+
+  document.getElementById('illus-pane').innerHTML = w.svg;
+  document.getElementById('meaning-text').textContent = w.meaning;
+  document.getElementById('cat-badge').textContent = w.category;
+  document.getElementById('word-display').textContent = w.word;
+  document.getElementById('word-display').classList.remove('visible');
+  document.getElementById('btn-reveal').textContent = 'Toon woord';
+  document.getElementById('counter').textContent = `${current + 1} / ${WORDS.length}`;
+
+  const pct = ((current + 1) / WORDS.length) * 100;
+  const fill = document.getElementById('progress-fill');
+  fill.style.width = pct + '%';
+  fill.style.background = w.color === 'pink' ? '#F5C6D0' : '#B8E0EC';
+
+  const hdr = document.getElementById('card-header');
+  hdr.style.background = w.color === 'pink' ? '#F5C6D0' : '#B8E0EC';
+  hdr.style.borderBottom = w.color === 'pink'
+    ? '1px solid rgba(212,83,126,0.2)'
+    : '1px solid rgba(91,168,192,0.2)';
+
+  const lbl = document.getElementById('header-label');
+  lbl.style.color = w.color === 'pink' ? '#7a3a48' : '#1a4d5e';
+}
+
+function toggleReveal() {
+  revealed = !revealed;
+  document.getElementById('word-display').classList.toggle('visible', revealed);
+  document.getElementById('btn-reveal').textContent = revealed ? 'Verberg woord' : 'Toon woord';
+}
+
+function next() {
+  if (current < WORDS.length - 1) { current++; showCard(); }
+}
+
+function prev() {
+  if (current > 0) { current--; showCard(); }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') next();
+  if (e.key === 'ArrowLeft') prev();
+  if (e.key === ' ') { e.preventDefault(); toggleReveal(); }
+});
+
+showCard();
+</script>
+</body>
+</html>
